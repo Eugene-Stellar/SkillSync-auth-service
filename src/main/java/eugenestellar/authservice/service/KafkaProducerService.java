@@ -25,9 +25,7 @@ public class KafkaProducerService {
         kafkaTemplate.send(TOPIC, key, event);
 
     future.whenComplete((result, ex) -> {
-      if (ex == null) {
-        System.out.println("Event was sent to Kafka!");
-      } else {
+      if (ex != null) {
         System.err.println("Error occurred during sending to Kafka: " + ex.getMessage());
       }
     });
