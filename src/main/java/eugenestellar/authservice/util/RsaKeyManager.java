@@ -1,7 +1,9 @@
 package eugenestellar.authservice.util;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.core.io.ClassPathResource;
+import lombok.Getter;
+import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.KeyFactory;
@@ -14,14 +16,22 @@ import java.util.Base64;
 @Component
 public class RsaKeyManager {
 
+  @Getter
   private RSAPublicKey publicKey;
+  @Getter
   private RSAPrivateKey privateKey;
+
+  @Value("${RSA_PUBLIC_KEY_PATH:classpath:certs/public.pem}")
+  private Resource publicKeyResource;
+
+  @Value("${RSA_PRIVATE_KEY_PATH:classpath:certs/private.pem}")
+  private Resource privateKeyResource;
 
   @PostConstruct
   public void init() throws Exception {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-    String publicKeyPEM = new String(new ClassPathResource("/certs/public.pem").getInputStream().readAllBytes())
+    String publicKeyPEM = new String(publicKeyResource.getInputStream().readAllBytes())
         .replace("-----BEGIN PUBLIC KEY-----", "")
         .replace("-----END PUBLIC KEY-----", "")
         .replaceAll("\\s", "");
@@ -29,20 +39,11 @@ public class RsaKeyManager {
     byte[] encodedPublic = Base64.getDecoder().decode(publicKeyPEM);
     this.publicKey = (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(encodedPublic));
 
-    String privateKeyPEM = new String(new ClassPathResource("certs/private.pem").getInputStream().readAllBytes())
+    String privateKeyPEM = new String(privateKeyResource.getInputStream().readAllBytes())
         .replace("-----BEGIN PRIVATE KEY-----", "")
         .replace("-----END PRIVATE KEY-----", "")
         .replaceAll("\\s", "");
     byte[] encodedPrivate = Base64.getDecoder().decode(privateKeyPEM);
     this.privateKey = (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(encodedPrivate));
   }
-
-  public RSAPublicKey getPublicKey() {
-    return publicKey;
-  }
-
-  public RSAPrivateKey getPrivateKey() {
-    return privateKey;
-  }
-
 }
