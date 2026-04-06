@@ -1,0 +1,50 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_URL}
+    ssl:
+      trust-store-location: ${SPRING_KAFKA_SSL_TRUST_STORE_LOCATION}
+      trust-store-password: ${SPRING_KAFKA_SSL_TRUST_STORE_PASSWORD}
+      trust-store-type: JKS
+
+      key-store-location: ${SPRING_KAFKA_SSL_KEY_STORE_LOCATION}
+      key-store-password: ${SPRING_KAFKA_SSL_KEY_STORE_PASSWORD}
+      key-store-type: PKCS12
+
+    properties:
+      security.protocol: SSL
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 300 # amount of simultaneous connections
+      minimum-idle: 10 # amount of ready connections
+      connection-timeout: 10000 # waiting time before error
+      pool-name: AuthHikariPool # Name for monitoring
+  threads:
+    virtual:
+      enabled: true
+
+  jpa:
+    # database: postgresql
+    show-sql: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate # validate tables structure
+    properties:
+      hibernate:
+        # optimization: group multiple INSERT/UPDATE statements into single network packets.
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+        # disable formatting to save CPU cycles
+        format_sql: false
