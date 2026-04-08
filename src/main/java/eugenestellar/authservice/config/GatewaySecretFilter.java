@@ -28,7 +28,9 @@ public class GatewaySecretFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain) throws ServletException, IOException {
 
-    if (request.getRequestURI().startsWith("/.well-known/")) {
+    String path = request.getRequestURI();
+
+    if (path.startsWith("/.well-known/") || path.startsWith("/uptime")) {
       filterChain.doFilter(request, response);
       return;
     }

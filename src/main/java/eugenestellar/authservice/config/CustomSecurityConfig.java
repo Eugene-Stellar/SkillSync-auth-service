@@ -40,7 +40,7 @@ public class CustomSecurityConfig {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/auth/**", "/error", "/.well-known/**").permitAll()
+            .requestMatchers("/auth/**", "/error", "/.well-known/**", "/uptime").permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(ex ->
             ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
