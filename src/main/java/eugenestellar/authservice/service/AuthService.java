@@ -14,11 +14,9 @@ import eugenestellar.authservice.model.dto.UserRegisteredEventDto;
 import eugenestellar.authservice.repository.UserRepo;
 import eugenestellar.authservice.util.JwtUtil;
 import eugenestellar.authservice.model.entity.User;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +34,7 @@ public class AuthService {
     this.passwordEncoder = passwordEncoder;
     this.jwtUtil = jwtUtil;
   }
+
 
   public ResponseTokenDto register(AuthRegisterUserDto userDto) {
 
@@ -66,29 +65,32 @@ public class AuthService {
     kafkaProducerService.sendRegistrationEvent(event);
 
     String token = jwtUtil.generateToken(savedUser.getId(), username,true, List.of(userForDb.getRole().toString()));
-    return new ResponseTokenDto(token);
+    return new ResponseTokenDto(token, setRefreshToken(username));
   }
 
-
-  public ResponseCookie setRefreshTokenInCookie(String username) {
-
-    return ResponseCookie.from("refresh-token", jwtUtil.generateToken(null, username, false, null))
-        .httpOnly(true)
-        .secure(true)
-        .sameSite("None") // for cross-domain access
-        .path("/") // cookie scope i.e. which paths will be the cookie send to, /auth by default(matched with Controller path)
-        .maxAge(Duration.ofDays(30))
-        .build();
+  public String setRefreshToken(String username) {
+    return jwtUtil.generateToken(null, username, false, null);
   }
+
+//  public ResponseCookie setRefreshTokenInCookie(String username) {
+//
+//    return ResponseCookie.from("refresh-token", jwtUtil.generateToken(null, username, false, null))
+//        .httpOnly(true)
+//        .secure(true)
+//        .sameSite("None") // for cross-domain access
+//        .path("/") // cookie scope i.e. which paths will be the cookie send to, /auth by default(matched with Controller path)
+//        .maxAge(Duration.ofDays(30))
+//        .build();
+//  }
 
   public ResponseTokenDto login(AuthLoginUserDto userDto) {
 
-    String username = userDto.getUsername();
+    String email = userDto.getEmail();
 
-    Optional<User> userFromDbOptional = userRepo.findByUsername(username);
+    Optional<User> userFromDbOptional = userRepo.findByEmail(email);
 
     if (userFromDbOptional.isEmpty())
-      throw new NotFoundUserOrIncorrectPasswordException("There's no user with a name " + username);
+      throw new NotFoundUserOrIncorrectPasswordException("There's no user with email " + email);
 
     User userFromDb = userFromDbOptional.get();
 
@@ -96,13 +98,15 @@ public class AuthService {
       throw new NotFoundUserOrIncorrectPasswordException("The password is incorrect");
 
     String role = userFromDb.getRole().toString();
-    String token = jwtUtil.generateToken(userFromDb.getId(), username, true, List.of(role));
+    String token = jwtUtil.generateToken(userFromDb.getId(), userFromDb.getUsername(), true, List.of(role));
 
-    return new ResponseTokenDto(token);
+
+    String username = userRepo.findByEmail(email).get().getUsername();
+    return new ResponseTokenDto(token, jwtUtil.generateToken(null, username, false, null));
 
   }
 
-  public ResponseTokenDto getNewAccessToken(String refreshToken) {
+  public String getNewAccessToken(String refreshToken) {
     try {
       DecodedJWT jwt = jwtUtil.validateRefreshToken(refreshToken);
       String username = jwt.getSubject();
@@ -111,9 +115,8 @@ public class AuthService {
           .orElseThrow(() -> new UserNotFoundForTokenException("User not found with username: " + username));
 
       String role = user.getRole().toString();
-      String accessToken = jwtUtil.generateToken(user.getId(), username, true, List.of(role));
 
-      return new ResponseTokenDto(accessToken);
+      return jwtUtil.generateToken(user.getId(), username, true, List.of(role));
 
     } catch (JWTVerificationException ex) {
       throw new ExpiredRefreshTokenException("Invalid or expired refresh token");
