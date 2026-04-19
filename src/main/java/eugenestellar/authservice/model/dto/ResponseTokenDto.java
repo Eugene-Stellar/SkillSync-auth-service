@@ -1,5 +1,6 @@
 package eugenestellar.authservice.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,5 +11,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResponseTokenDto {
-  private String token;
+  @JsonProperty("access-token")
+  private String accessToken;
+  @JsonProperty("refresh-token")
+  private String refreshToken;
 }
