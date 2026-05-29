@@ -21,8 +21,8 @@ public class User {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(unique = true, nullable = false, columnDefinition = "VARCHAR(20) CHECK (length(username) >= 3)") // db level
-  private String username;
+//  @Column(unique = true, nullable = false, columnDefinition = "VARCHAR(20) CHECK (length(username) >= 3)") // db level
+//  private String username;
 
   @Column(nullable = false)
   private String password;
